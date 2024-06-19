@@ -93,20 +93,7 @@ export default async function Sections(sectionInput: TSectionInput, parameters: 
             }
         })();
 
-        const sections:TSection[] = await getSections(filter, keys, content.sections.fields, projectId);
-        if (depthLevel > 1) {
-            for (let section of sections) {
-                filter.parentId = section.id;
-                section.sections = await getSections(filter, keys, content.sections.fields, projectId);            
-
-                if (depthLevel > 2) {
-                    for (let section2 of section.sections) {
-                        filter.parentId = section2.id;
-                        section2.sections = await getSections(filter, keys, content.sections.fields, projectId);
-                    }
-                }
-            }
-        }
+        const sections: TSection[] = await getSections(filter, keys, content.sections.fields, projectId);
 
         return {sections, names, keys, parent};
     } catch (error) {

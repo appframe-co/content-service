@@ -14,10 +14,6 @@ type TContentsFilter = {
 
 type TOutputContent = TContent & {entriesCount: number}
 
-function isErrorEntryCount(data: TErrorResponse|{count:number}): data is TErrorResponse {
-    return !!(data as TErrorResponse).error;
-}
-
 export default async function Contents(contentInput: TContentsInput, parameters: TParameters = {}): Promise<TErrorResponse | {contents: TOutputContent[]}> {
     try {
         const {userId, projectId} = contentInput;

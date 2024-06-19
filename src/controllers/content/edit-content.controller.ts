@@ -86,7 +86,7 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                     if (errorsFields.length > 0) {
                                         errors.push({field: ['fields'], message: errorsFields[0]});
                                     }
-                                    content.fields = valueFields.map((v:any, k:number) => {
+                                    content.entries.fields = valueFields.map((v:any, k:number) => {
                                         const {type, name, key, description, validations} = v;
 
                                         const [errorsType, valueType] = validateString(type,
