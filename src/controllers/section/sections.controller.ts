@@ -3,16 +3,17 @@ import Content from '@/models/content.model';
 
 import {TDoc, TErrorResponse, TFile, TParameters, TSection, TSectionModel, TField, TContentModel} from '@/types/types';
 
+type TFieldOutput = Pick<TField, 'type'|'key'|'name'>;
+
 type TSectionInput = {
     userId: string;
     projectId: string; 
     contentId: string;
 }
 
-type TProps = {
+type TPropsOutput = {
     sections: TSection[];
-    names: string[];
-    keys: string[];
+    fields: TFieldOutput[];
     parent: TSection|null;
 }
 
@@ -22,10 +23,10 @@ type TFilter = {
     contentId: string;
     _id?: any;
     parentId?: string|null;
+    'doc.code'?: string;
 }
 
-
-export default async function Sections(sectionInput: TSectionInput, parameters: TParameters = {}): Promise<TErrorResponse | TProps>{
+export default async function Sections(sectionInput: TSectionInput, parameters: TParameters = {}): Promise<TErrorResponse | TPropsOutput>{
     try {
         const {userId, projectId, contentId} = sectionInput;
 
@@ -34,23 +35,26 @@ export default async function Sections(sectionInput: TSectionInput, parameters: 
         }
 
         const defaultLimit = 10;
-        const defaultDepthLevel = 3;
 
         const filter: TFilter = {createdBy: userId, projectId, contentId};
-        let {sinceId, limit=defaultLimit, page=1, ids, parentId=null, depthLevel=1} = parameters;
+        let {sinceId, limit=defaultLimit, page=1, ids, parentId=null, sectionCode=null} = parameters;
 
         if (limit > 250) {
             limit = defaultLimit;
         }
+        
+        filter['parentId'] = parentId;
+
         if (sinceId) {
             filter['_id'] = {$gt: sinceId};
         }
         if (ids) {
             filter['_id'] = {$in: ids.split(',')};
         }
-        filter['parentId'] = parentId;
-
-        depthLevel = depthLevel > 3 ? defaultDepthLevel : depthLevel;
+        if (sectionCode) {
+            filter['doc.code'] = sectionCode;
+            delete filter['parentId'];
+        }
 
         const skip = (page - 1) * limit;
 
@@ -61,9 +65,11 @@ export default async function Sections(sectionInput: TSectionInput, parameters: 
         }
 
         // COMPARE sections by content
-        const names = content.sections.fields.map(b => b.name);
-        const keys = content.sections.fields.map(b => b.key);
-
+        const fields: TFieldOutput[] = content.sections.fields.map(f => ({key: f.key, name: f.name, type: f.type}))
+        const keys = fields.reduce((acc:string[], f:TFieldOutput) => {
+            acc.push(f.key);
+            return acc;
+        }, []);
         const parent: TSection|null = await (async function() {
             try {
                 const section: TSectionModel|null = await Section.findOne({createdBy: userId, projectId, contentId, _id: parentId});
@@ -95,7 +101,7 @@ export default async function Sections(sectionInput: TSectionInput, parameters: 
 
         const sections: TSection[] = await getSections(filter, keys, content.sections.fields, projectId);
 
-        return {sections, names, keys, parent};
+        return {sections, fields, parent};
     } catch (error) {
         throw error;
     }

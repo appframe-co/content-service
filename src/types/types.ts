@@ -171,6 +171,7 @@ export type TParameters = {
   sectionId?: string;
   parentId?: string;
   depthLevel?: number;
+  sectionCode?: string;
 }
 
 export type TSort = {[key: string]: SortOrder};

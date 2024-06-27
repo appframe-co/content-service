@@ -29,8 +29,8 @@ if (app.get('env') === 'production') {
 
 app.use(cors());
 app.use(cookieParser());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true}));
+app.use(bodyParser.json({limit: '1MB'}));
+app.use(bodyParser.urlencoded({ extended: true, limit: '1MB'}));
 
 Routes({ app });
 
@@ -38,7 +38,6 @@ app.use((req: Request, res: Response): void => {
     res.status(404).json({error: 'Not Found'});
 });
 app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
-    console.error(err);
     next(err);
 });
 app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {

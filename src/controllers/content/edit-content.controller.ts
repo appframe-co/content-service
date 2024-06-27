@@ -91,7 +91,7 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
 
                                         const [errorsType, valueType] = validateString(type,
                                             {required: true, choices: [[
-                                                'single_line_text', 'multi_line_text',
+                                                'single_line_text', 'multi_line_text', 'rich_text',
                                                 'number_integer', 'number_decimal', 'boolean', 'money',
                                                 'date_time', 'date',
                                                 'file_reference',
@@ -289,7 +289,7 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
 
                                         const [errorsType, valueType] = validateString(type,
                                             {required: true, choices: [[
-                                                'single_line_text', 'multi_line_text',
+                                                'single_line_text', 'multi_line_text', 'rich_text',
                                                 'number_integer', 'number_decimal', 'boolean', 'money',
                                                 'date_time', 'date',
                                                 'file_reference',
@@ -300,12 +300,12 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                         if (errorsType.length > 0) {
                                             errors.push({field: ['sections', 'fields', k, 'type'], message: errorsType[0]});
                                         }
-                
+
                                         const [errorsName, valueName] = validateString(name, {required: true, max: 255});
                                         if (errorsName.length > 0) {
                                             errors.push({field: ['sections', 'fields', k, 'name'], message: errorsName[0]}); 
                                         }
-                
+
                                         const [errorsKey, valueKey] = validateString(key, {
                                             required: true, 
                                             min: 3,

@@ -73,7 +73,7 @@ export default async function CreateContent(contentInput: TContentInput): Promis
 
                                         const [errorsType, valueType] = validateString(type,
                                             {required: true, choices: [[
-                                                'single_line_text', 'multi_line_text',
+                                                'single_line_text', 'multi_line_text', 'rich_text',
                                                 'number_integer', 'number_decimal', 'boolean', 'money',
                                                 'date_time', 'date',
                                                 'file_reference',
@@ -236,7 +236,7 @@ export default async function CreateContent(contentInput: TContentInput): Promis
                 
                                         const [errorsType, valueType] = validateString(type,
                                             {required: true, choices: [[
-                                                'single_line_text', 'multi_line_text',
+                                                'single_line_text', 'multi_line_text', 'rich_text',
                                                 'number_integer', 'number_decimal', 'boolean', 'money',
                                                 'date_time', 'date',
                                                 'file_reference',

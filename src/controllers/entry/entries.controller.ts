@@ -1,9 +1,11 @@
 import Entry from '@/models/entry.model';
 import Content from '@/models/content.model';
 
-import {TEntry, TEntryInput, TDoc, TErrorResponse, TFile, TEntryModel, TParameters, TContentModel} from '@/types/types';
+import {TEntry, TEntryInput, TDoc, TErrorResponse, TFile, TEntryModel, TParameters, TContentModel, TField} from '@/types/types';
 
-export default async function Entries(entryInput: TEntryInput, parameters: TParameters = {}): Promise<TErrorResponse | {entries: TEntry[], names: string[], keys: string[]}>{
+type TFieldOutput = Pick<TField, 'type'|'key'|'name'>;
+
+export default async function Entries(entryInput: TEntryInput, parameters: TParameters = {}): Promise<TErrorResponse | {entries: TEntry[], fields: TFieldOutput[]}>{
     try {
         const {userId, projectId, contentId} = entryInput;
 
@@ -13,8 +15,8 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
 
         const defaultLimit = 10;
 
-        const filter: any = {createdBy: userId, projectId, contentId};
-        let {sinceId, limit=defaultLimit, page=1, ids, sectionId} = parameters;
+        let filter: any = {createdBy: userId, projectId, contentId};
+        let {sinceId, limit=defaultLimit, page=1, ids, sectionId, ...doc} = parameters;
 
         if (limit > 250) {
             limit = defaultLimit;
@@ -27,6 +29,9 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
         }
         if (sectionId) {
             filter['sectionIds'] = {$in: sectionId};
+        }
+        if (Object.keys(doc).length) {
+            filter = {...filter, ...doc};
         }
 
         const skip = (page - 1) * limit;
@@ -43,11 +48,10 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
         }
 
         // COMPARE entries by content
-        const names = content.entries.fields.map(b => b.name);
-        const keys = content.entries.fields.map(b => b.key);
+        const fields: TFieldOutput[] = content.entries.fields.map(f => ({key: f.key, name: f.name, type: f.type}))
         const result = entries.map(entry => {
-            const doc = keys.reduce((acc: TDoc, key: string) => {
-                acc[key] = entry.doc.hasOwnProperty(key) ? entry.doc[key] : null
+            const doc = fields.reduce((acc: TDoc, field: TFieldOutput) => {
+                acc[field.key] = entry.doc.hasOwnProperty(field.key) ? entry.doc[field.key] : null
 
                 return acc;
             }, {});
@@ -74,7 +78,7 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
                 if (!r.doc[key]) {
                     continue;
                 }
-                
+
                 if (Array.isArray(r.doc[key])) {
                     fileIds = [...fileIds, ...r.doc[key]];
                 } else {
@@ -109,7 +113,7 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
             }
         }
 
-        return {entries: result, names, keys};
+        return {entries: result, fields};
     } catch (error) {
         throw error;
     }

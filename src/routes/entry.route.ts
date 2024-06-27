@@ -22,9 +22,9 @@ type TQueryGet = {
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { userId, projectId, contentId, limit, page, sinceId, ids, section_id:sectionId } = req.query as TQueryGet;
+        const { userId, projectId, contentId, limit, page, sinceId, ids, section_id:sectionId, ...doc } = req.query as TQueryGet;
 
-        const parameters: TParameters = {};
+        let parameters: TParameters = {};
         if (limit) {
             parameters.limit = +limit;
         }
@@ -39,6 +39,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         }
         if (sectionId) {
             parameters.sectionId = sectionId;
+        }
+
+        if (Object.keys(doc).length) {
+            parameters = {...parameters, ...doc};
         }
 
         const data = await EntriesController({
