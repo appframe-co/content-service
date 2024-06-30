@@ -230,18 +230,18 @@ export default async function CreateContent(contentInput: TContentInput): Promis
                                     if (errorsFields.length > 0) {
                                         errors.push({field: ['fields'], message: errorsFields[0]});
                                     }
-            
+
                                     content.sections.fields = valueFields.map((v:any, k:number) => {
                                         const {id, type, name, key, description, validations, system} = v;
                 
                                         const [errorsType, valueType] = validateString(type,
                                             {required: true, choices: [[
                                                 'single_line_text', 'multi_line_text', 'rich_text',
-                                                'number_integer', 'number_decimal', 'boolean', 'money',
+                                                'number_integer', 'number_decimal',
                                                 'date_time', 'date',
                                                 'file_reference',
                                                 'list.single_line_text', 'list.date_time', 'list.date', 'list.file_reference',
-                                                'url_handle'
+                                                'url_handle', 'color', 'boolean', 'money',
                                             ]]}
                                         );
                                         if (errorsType.length > 0) {

@@ -305,6 +305,41 @@ export default async function UpdateSection(sectionInput: TSectionInput): Promis
                                         section['doc'][schemaData.key] = valueValue;
                                     }
                                 }
+                                if (schemaData.type === 'color') {
+                                    const [errorsValue, valueValue] = validateString(valueData, options);
+
+                                    if (errorsValue.length > 0) {
+                                        errors.push({field: ['doc', schemaData.key], message: errorsValue[0]}); 
+                                    }
+
+                                    if (valueValue !== null && valueValue !== undefined) {
+                                        section['doc'][schemaData.key] = valueValue;
+                                    }
+                                }
+                                if (schemaData.type === 'list.color') {
+                                    const {required, ...restOptions} = options;
+                                    const [errorsValue, valueValue] = validateArray(valueData, {
+                                        required,
+                                        value: ['string', restOptions]
+                                    });
+
+                                    if (errorsValue.length > 0) {
+                                        if (valueValue.length) {
+                                            for (let i=0; i < errorsValue.length; i++) {
+                                                if (!errorsValue[i]) {
+                                                    continue;
+                                                }
+                                                errors.push({field: ['doc', schemaData.key, i], message: errorsValue[i]}); 
+                                            }
+                                        } else {
+                                            errors.push({field: ['doc', schemaData.key], message: errorsValue[0]});
+                                        }
+                                    }
+
+                                    if (valueValue !== null && valueValue !== undefined) {
+                                        section['doc'][schemaData.key] = valueValue;
+                                    }
+                                }
                             }
                         }
                     }

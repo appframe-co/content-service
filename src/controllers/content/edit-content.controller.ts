@@ -92,11 +92,11 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                         const [errorsType, valueType] = validateString(type,
                                             {required: true, choices: [[
                                                 'single_line_text', 'multi_line_text', 'rich_text',
-                                                'number_integer', 'number_decimal', 'boolean', 'money',
+                                                'number_integer', 'number_decimal',
                                                 'date_time', 'date',
                                                 'file_reference',
-                                                'list.single_line_text', 'list.date_time', 'list.date', 'list.file_reference',
-                                                'url_handle'
+                                                'list.single_line_text', 'list.date_time', 'list.date', 'list.file_reference', 'list.color',
+                                                'url_handle', 'color', 'boolean', 'money',
                                             ]]}
                                         );
                                         if (errorsType.length > 0) {
@@ -290,11 +290,11 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                         const [errorsType, valueType] = validateString(type,
                                             {required: true, choices: [[
                                                 'single_line_text', 'multi_line_text', 'rich_text',
-                                                'number_integer', 'number_decimal', 'boolean', 'money',
+                                                'number_integer', 'number_decimal',
                                                 'date_time', 'date',
                                                 'file_reference',
-                                                'list.single_line_text', 'list.date_time', 'list.date', 'list.file_reference',
-                                                'url_handle'
+                                                'list.single_line_text', 'list.date_time', 'list.date', 'list.file_reference','list.color',
+                                                'url_handle', 'color', 'boolean', 'money',
                                             ]]}
                                         );
                                         if (errorsType.length > 0) {
