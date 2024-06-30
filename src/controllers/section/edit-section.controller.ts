@@ -340,6 +340,57 @@ export default async function UpdateSection(sectionInput: TSectionInput): Promis
                                         section['doc'][schemaData.key] = valueValue;
                                     }
                                 }
+                                if (schemaData.type === 'url') {
+                                    const [errorsValue, valueValue] = validateString(valueData, options);
+
+                                    if (valueValue) {
+                                        const isPrefix = new RegExp(/(http|https|mailto|sms|tel):/).test(valueValue);
+                                        if (!isPrefix) {
+                                            errors.push({field: ['doc', schemaData.key], message: 'Value cannot have an empty scheme (protocol), must include one of the following URL schemes: ["http", "https", "mailto", "sms", "tel"].', value: valueValue}); 
+                                        }
+                                    }
+
+                                    if (errorsValue.length > 0) {
+                                        errors.push({field: ['doc', schemaData.key], message: errorsValue[0]}); 
+                                    }
+
+                                    if (valueValue !== null && valueValue !== undefined) {
+                                        section['doc'][schemaData.key] = valueValue;
+                                    }
+                                }
+                                if (schemaData.type === 'list.url') {
+                                    const {required, ...restOptions} = options;
+                                    const [errorsValue, valueValue] = validateArray(valueData, {
+                                        required,
+                                        value: ['string', restOptions]
+                                    });
+
+                                    if (valueValue) {
+                                        valueValue.forEach((v:string, i:number) => {
+                                            const isPrefix = new RegExp(/(http|https|mailto|sms|tel):/).test(v);
+                                            if (!isPrefix) {
+                                                errors.push({field: ['doc', schemaData.key, i], message: 'Value cannot have an empty scheme (protocol), must include one of the following URL schemes: ["http", "https", "mailto", "sms", "tel"].'}); 
+                                            }
+                                        });
+                                    }
+
+                                    if (errorsValue.length > 0) {
+                                        if (valueValue && valueValue.length) {
+                                            for (let i=0; i < errorsValue.length; i++) {
+                                                if (!errorsValue[i]) {
+                                                    continue;
+                                                }
+                                                errors.push({field: ['doc', schemaData.key, i], message: errorsValue[i]}); 
+                                            }
+                                        } else {
+                                            errors.push({field: ['doc', schemaData.key], message: errorsValue[0]});
+                                        }
+                                    }
+
+                                    if (valueValue !== null && valueValue !== undefined) {
+                                        section['doc'][schemaData.key] = valueValue;
+                                    }
+                                }
                             }
                         }
                     }
