@@ -87,7 +87,8 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                         errors.push({field: ['fields'], message: errorsFields[0]});
                                     }
                                     content.entries.fields = valueFields.map((v:any, k:number) => {
-                                        const {type, name, key, description, validations} = v;
+                                        const {id, type, name, key, description, validations, system, unit} = v;
+                                        let output = {};
 
                                         const [errorsType, valueType] = validateString(type,
                                             {required: true, choices: [[
@@ -95,8 +96,8 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                                 'number_integer', 'number_decimal',
                                                 'date_time', 'date',
                                                 'file_reference',
-                                                'list.single_line_text', 'list.date_time', 'list.date', 'list.file_reference', 'list.color', 'list.url',
-                                                'url_handle', 'color', 'boolean', 'money', 'url'
+                                                'list.single_line_text', 'list.number_integer', 'list.number_decimal', 'list.date_time', 'list.date', 'list.file_reference', 'list.color', 'list.url', 'list.dimension', 'list.volume', 'list.weight',
+                                                'url_handle', 'color', 'boolean', 'money', 'url', 'dimension', 'volume', 'weight'
                                             ]]}
                                         );
                                         if (errorsType.length > 0) {
@@ -124,6 +125,14 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                         const [errorsDescription, valueDescription] = validateString(description, {max: 100});
                                         if (errorsDescription.length > 0) {
                                             errors.push({field: ['fields', k, 'description'], message: errorsDescription[0]}); 
+                                        }
+
+                                        if (v.hasOwnProperty('unit')) {
+                                            const [errorsUnit, valueUnit] = validateString(unit, {required: true, max: 255});
+                                            if (errorsUnit.length > 0) {
+                                                errors.push({field: ['fields', k, 'unit'], message: errorsUnit[0]}); 
+                                            }
+                                            output = {...output, unit: valueUnit};
                                         }
 
                                         const validatedValidations = validations.map((v:any, j:number) => {
@@ -213,13 +222,23 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                             };
                                         });
 
-                                        return {
+                                        const [errorsSystem, valueSystem] = validateBoolean(system);
+                                        if (errorsSystem.length > 0) {
+                                            errors.push({field: ['sections', 'fields', k, 'system'], message: errorsSystem[0]}); 
+                                        }
+
+                                        output = {
+                                            ...output,
+                                            id,
                                             type: valueType,
                                             name: valueName,
                                             key: valueKey,
                                             description: valueDescription,
-                                            validations: validatedValidations
+                                            validations: validatedValidations,
+                                            system: valueSystem
                                         };
+
+                                        return output;
                                     });
                                 }
                             }
@@ -285,7 +304,8 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                     }
             
                                     content.sections.fields = valueFields.map((v:any, k:number) => {
-                                        const {id, type, name, key, description, validations, system} = v;
+                                        const {id, type, name, key, description, validations, system, unit} = v;
+                                        let output = {};
 
                                         const [errorsType, valueType] = validateString(type,
                                             {required: true, choices: [[
@@ -293,8 +313,8 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                                 'number_integer', 'number_decimal',
                                                 'date_time', 'date',
                                                 'file_reference',
-                                                'list.single_line_text', 'list.date_time', 'list.date', 'list.file_reference','list.color','list.url',
-                                                'url_handle', 'color', 'boolean', 'money', 'url'
+                                                'list.single_line_text', 'list.number_integer', 'list.number_decimal', 'list.date_time', 'list.date', 'list.file_reference', 'list.color', 'list.url', 'list.dimension', 'list.volume', 'list.weight',
+                                                'url_handle', 'color', 'boolean', 'money', 'url', 'dimension', 'volume', 'weight'
                                             ]]}
                                         );
                                         if (errorsType.length > 0) {
@@ -326,7 +346,17 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                         if (errorsDescription.length > 0) {
                                             errors.push({field: ['sections', 'fields', k, 'description'], message: errorsDescription[0]}); 
                                         }
-                
+
+                                        if (v.hasOwnProperty('unit')) {
+                                            const [errorsUnit, valueUnit] = validateString(unit, {required: true, max: 255});
+
+                                        
+                                            if (errorsUnit.length > 0) {
+                                                errors.push({field: ['fields', k, 'unit'], message: errorsUnit[0]}); 
+                                            }
+                                            output = {...output, unit: valueUnit};
+                                        }
+
                                         const validatedValidations = validations.map((v:any, j:number) => {
                                             const {code, value, type} = v;
                 
@@ -419,7 +449,8 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                             errors.push({field: ['sections', 'fields', k, 'system'], message: errorsSystem[0]}); 
                                         }
 
-                                        return {
+                                        output = {
+                                            ...output,
                                             id,
                                             type: valueType,
                                             name: valueName,
@@ -428,6 +459,8 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                             validations: validatedValidations,
                                             system: valueSystem
                                         };
+
+                                        return output;
                                     });
                                 }
                             }

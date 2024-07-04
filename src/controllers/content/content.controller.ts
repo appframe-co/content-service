@@ -27,11 +27,27 @@ export default async function ContentController(
                         code: v.code,
                         value: v.value
                     })),
+                    unit: field.unit
                 })),
             },
             notifications: content.notifications,
             translations: content.translations,
-            sections: content.sections
+            sections: {
+                enabled: content.sections.enabled,
+                fields: content.sections.fields.map(field => ({
+                    id: field.id,
+                    type: field.type,
+                    name: field.name,
+                    key: field.key,
+                    description: field.description,
+                    validations: field.validations.map(v => ({
+                        type: v.type,
+                        code: v.code,
+                        value: v.value
+                    })),
+                    unit: field.unit
+                })),
+            }
         };
 
         return {content: output};

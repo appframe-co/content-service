@@ -99,7 +99,8 @@ export default async function UpdateEntry(entryInput: TEntryInput): Promise<{ent
                                         entry['doc'][schemaData.key] = valueValue;
                                     }
                                 }
-                                if (schemaData.type === 'number_integer' || schemaData.type === 'number_decimal') {
+                                if (schemaData.type === 'number_integer' || schemaData.type === 'number_decimal' || 
+                                    schemaData.type === 'dimension' || schemaData.type === 'volume' || schemaData.type === 'weight') {
                                     const [errorsValue, valueValue] = validateNumber(valueData, options);
           
                                     if (errorsValue.length > 0) {
@@ -178,7 +179,8 @@ export default async function UpdateEntry(entryInput: TEntryInput): Promise<{ent
                                         entry['doc'][schemaData.key] = valueValue;
                                     }
                                 }
-                                if (schemaData.type === 'list.number_integer' || schemaData.type === 'list.number_decimal') {
+                                if (schemaData.type === 'list.number_integer' || schemaData.type === 'list.number_decimal' || 
+                                    schemaData.type === 'list.dimension' || schemaData.type === 'list.volume' || schemaData.type === 'list.weight') {
                                     const {required, ...restOptions} = options;
                                     const [errorsValue, valueValue] = validateArray(valueData, {
                                         required,

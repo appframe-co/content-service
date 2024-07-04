@@ -34,6 +34,7 @@ type TFieldModel = {
   description: string;
   validations: TValidationFieldModel[];
   system: boolean;
+  unit: string;
 }
 
 export type TContentModel = {
