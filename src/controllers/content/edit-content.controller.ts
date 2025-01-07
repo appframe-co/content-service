@@ -95,7 +95,7 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                                 'single_line_text', 'multi_line_text', 'rich_text',
                                                 'number_integer', 'number_decimal',
                                                 'date_time', 'date',
-                                                'file_reference',
+                                                'file_reference', 'content_reference', 
                                                 'list.single_line_text', 'list.number_integer', 'list.number_decimal', 'list.date_time', 'list.date', 'list.file_reference', 'list.color', 'list.url', 'list.dimension', 'list.volume', 'list.weight',
                                                 'url_handle', 'color', 'boolean', 'money', 'url', 'dimension', 'volume', 'weight'
                                             ]]}
@@ -138,7 +138,7 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                         const validatedValidations = validations.map((v:any, j:number) => {
                                             const {code, value, type} = v;
 
-                                            const codes = ['required', 'unique', 'choices', 'max', 'min', 'regex', 'max_precision', 'field_reference', 'transliteration'];
+                                            const codes = ['required', 'unique', 'choices', 'max', 'min', 'regex', 'max_precision', 'field_reference', 'content_reference', 'transliteration'];
                                             const [errorsCode, valueCode] = validateString(code,{required: true, choices: [codes]});
                                             if (errorsCode.length > 0) {
                                                 errors.push({field: ['fields', k, 'validations', j, 'code'], message: errorsCode[0]});
@@ -194,6 +194,9 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                                     });
                                                 }
                                                 if (valueCode === 'field_reference') {
+                                                    return validateString(value);
+                                                }
+                                                if (valueCode === 'content_reference') {
                                                     return validateString(value);
                                                 }
                                                 if (valueCode === 'transliteration') {
