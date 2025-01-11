@@ -60,7 +60,8 @@ export default async function Contents(contentInput: TContentsInput, parameters:
                             code: v.code,
                             value: v.value
                         })),
-                        unit: field.unit
+                        unit: field.unit,
+                        system: field.system
                     })),
                 },
                 notifications: content.notifications,
@@ -78,7 +79,8 @@ export default async function Contents(contentInput: TContentsInput, parameters:
                             code: v.code,
                             value: v.value
                         })),
-                        unit: field.unit
+                        unit: field.unit,
+                        system: field.system
                     })),
                 },
                 entriesCount

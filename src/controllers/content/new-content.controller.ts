@@ -66,7 +66,7 @@ export default async function CreateContent(contentInput: TContentInput): Promis
                                 if (fields !== undefined && fields !== null) {
                                     const [errorsFields, valueFields] = validateArray(fields, {required: true, max: 10});
                                     if (errorsFields.length > 0) {
-                                        errors.push({field: ['fields'], message: errorsFields[0]});
+                                        errors.push({field: ['entries', 'fields'], message: errorsFields[0]});
                                     }
                                     content.entries.fields = valueFields.map((v:any, k:number) => {
                                         const {type, name, key, description, validations, unit} = v;
@@ -83,12 +83,12 @@ export default async function CreateContent(contentInput: TContentInput): Promis
                                             ]]}
                                         );
                                         if (errorsType.length > 0) {
-                                            errors.push({field: ['fields', k, 'type'], message: errorsType[0]});
+                                            errors.push({field: ['entries', 'fields', k, 'type'], message: errorsType[0]});
                                         }
 
                                         const [errorsName, valueName] = validateString(name, {required: true, max: 255});
                                         if (errorsName.length > 0) {
-                                            errors.push({field: ['fields', k, 'name'], message: errorsName[0]}); 
+                                            errors.push({field: ['entries', 'fields', k, 'name'], message: errorsName[0]}); 
                                         }
 
                                         const [errorsKey, valueKey] = validateString(key, {
@@ -101,18 +101,18 @@ export default async function CreateContent(contentInput: TContentInput): Promis
                                             ]
                                         });
                                         if (errorsKey.length > 0) {
-                                            errors.push({field: ['fields', k, 'key'], message: errorsKey[0]}); 
+                                            errors.push({field: ['entries', 'fields', k, 'key'], message: errorsKey[0]}); 
                                         }
 
                                         const [errorsDescription, valueDescription] = validateString(description, {max: 100});
                                         if (errorsDescription.length > 0) {
-                                            errors.push({field: ['fields', k, 'description'], message: errorsDescription[0]}); 
+                                            errors.push({field: ['entries', 'fields', k, 'description'], message: errorsDescription[0]}); 
                                         }
 
                                         if (v.hasOwnProperty('unit')) {
                                             const [errorsUnit, valueUnit] = validateString(unit, {max: 255});
                                             if (errorsUnit.length > 0) {
-                                                errors.push({field: ['fields', k, 'unit'], message: errorsUnit[0]}); 
+                                                errors.push({field: ['entries', 'fields', k, 'unit'], message: errorsUnit[0]}); 
                                             }
                                             output = {...output, unit: valueUnit};
                                         }
@@ -123,13 +123,13 @@ export default async function CreateContent(contentInput: TContentInput): Promis
                                             const codes = ['required', 'unique', 'choices', 'max', 'min', 'regex', 'max_precision', 'field_reference', 'transliteration'];
                                             const [errorsCode, valueCode] = validateString(code,{required: true, choices: [codes]});
                                             if (errorsCode.length > 0) {
-                                                errors.push({field: ['fields', k, 'validations', j, 'code'], message: errorsCode[0]});
+                                                errors.push({field: ['entries', 'fields', k, 'validations', j, 'code'], message: errorsCode[0]});
                                             }
 
                                             const types = ['checkbox', 'text', 'number', 'date_time', 'date', 'list.text'];
                                             const [errorsType, valueType] = validateString(type, {required: true, choices: [types]});
                                             if (errorsType.length > 0) {
-                                                errors.push({field: ['fields', k, 'validations', j, 'type'], message: errorsType[0]});
+                                                errors.push({field: ['entries', 'fields', k, 'validations', j, 'type'], message: errorsType[0]});
                                             }
 
                                             const [errorsValue, valueValue] = (function() {
@@ -190,10 +190,10 @@ export default async function CreateContent(contentInput: TContentInput): Promis
                                                         if (!errorsValue[i]) {
                                                             continue;
                                                         }
-                                                        errors.push({field: ['fields', k, 'validations', j, 'value', i], message: errorsValue[i]}); 
+                                                        errors.push({field: ['entries', 'fields', k, 'validations', j, 'value', i], message: errorsValue[i]}); 
                                                     }
                                                 } else {
-                                                    errors.push({field: ['fields', k, 'validations', j, 'value'], message: errorsValue[0]}); 
+                                                    errors.push({field: ['entries', 'fields', k, 'validations', j, 'value'], message: errorsValue[0]}); 
                                                 }
                                             }
 
@@ -240,7 +240,7 @@ export default async function CreateContent(contentInput: TContentInput): Promis
                                 if (fields !== undefined && fields !== null) {
                                     const [errorsFields, valueFields] = validateArray(fields, {required: true, max: 10});
                                     if (errorsFields.length > 0) {
-                                        errors.push({field: ['fields'], message: errorsFields[0]});
+                                        errors.push({field: ['sections', 'fields'], message: errorsFields[0]});
                                     }
 
                                     content.sections.fields = valueFields.map((v:any, k:number) => {
