@@ -3,7 +3,7 @@ import Content from '@/models/content.model'
 
 import {TEntry, TEntryInput, TErrorResponse, TDoc, TFile, TEntryModel, TContentModel} from '@/types/types';
 
-export default async function EntryController(entryInput: TEntryInput): Promise<TErrorResponse | {entry: TEntry, files: TFile[]}> {
+export default async function EntryController(entryInput: TEntryInput): Promise<TErrorResponse | {entry: TEntry, files: TFile[], entries: TEntry[]}> {
     try {
         const {id, projectId, userId, contentId} = entryInput;
 
@@ -52,6 +52,38 @@ export default async function EntryController(entryInput: TEntryInput): Promise<
         });
         const {files}: {files: TFile[]} = await resFetchFiles.json();
 
+        let entryIds: string[] = [];
+        const keyListContentRef = content.entries.fields
+            .filter(b => ['content_reference', 'list.content_reference'].includes(b.type))
+            .map(b => b.key);
+        for (const key of keyListContentRef) {
+            if (!doc[key]) {
+                continue;
+            }
+
+            if (Array.isArray(doc[key])) {
+                entryIds = [...entryIds, ...doc[key]];
+            } else {
+                entryIds = [...entryIds, doc[key]];
+            }
+        }
+
+        const entries: TEntryModel[]|null = await Entry.find({createdBy: userId, projectId, _id: {$in: entryIds}});
+        if (!entries) {
+            throw new Error('invalid entries');
+        }
+        const outputEntries: TEntry[] = entries.map(entry => ({
+            id: entry.id,
+            projectId: entry.projectId,
+            contentId: entry.contentId,
+            createdAt: entry.createdAt,
+            updatedAt: entry.updatedAt,
+            createdBy: entry.createdBy,
+            updatedBy: entry.updatedBy,
+            doc: entry.doc,
+            sectionIds: entry.sectionIds
+        }))
+
         const output = {
             id: entry.id,
             projectId: entry.projectId,
@@ -63,7 +95,7 @@ export default async function EntryController(entryInput: TEntryInput): Promise<
             doc,
             sectionIds: entry.sectionIds
         };
-        return {entry: output, files};
+        return {entry: output, files, entries: outputEntries};
     } catch (error) {
         throw error;
     }

@@ -33,6 +33,7 @@ type TFieldModel = {
   key: string;
   description: string;
   validations: TValidationFieldModel[];
+  params: TValidationFieldModel[];
   system: boolean;
   unit: string;
 }
@@ -173,6 +174,8 @@ export type TParameters = {
   parentId?: string;
   depthLevel?: number;
   sectionCode?: string;
+  searchFieldKey?: string;
+  searchFieldValue?: string;
 }
 
 export type TSort = {[key: string]: SortOrder};

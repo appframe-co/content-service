@@ -60,6 +60,11 @@ export default async function Contents(contentInput: TContentsInput, parameters:
                             code: v.code,
                             value: v.value
                         })),
+                        params: field.params.map(v => ({
+                            type: v.type,
+                            code: v.code,
+                            value: v.value
+                        })),
                         unit: field.unit,
                         system: field.system
                     })),

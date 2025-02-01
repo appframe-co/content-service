@@ -15,6 +15,7 @@ const FieldSchema: Schema = new Schema({
   description: String,
   type: String,
   validations: [ValidationSchema],
+  params: [ValidationSchema],
   system: Boolean,
   unit: String
 });

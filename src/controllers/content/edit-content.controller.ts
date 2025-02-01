@@ -87,7 +87,7 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                         errors.push({field: ['entries', 'fields'], message: errorsFields[0]});
                                     }
                                     content.entries.fields = valueFields.map((v:any, k:number) => {
-                                        const {id, type, name, key, description, validations, system, unit} = v;
+                                        const {id, type, name, key, description, params, validations, system, unit} = v;
                                         let output = {};
 
                                         const [errorsType, valueType] = validateString(type,
@@ -96,7 +96,7 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                                 'number_integer', 'number_decimal',
                                                 'date_time', 'date',
                                                 'file_reference', 'content_reference', 
-                                                'list.single_line_text', 'list.number_integer', 'list.number_decimal', 'list.date_time', 'list.date', 'list.file_reference', 'list.color', 'list.url', 'list.dimension', 'list.volume', 'list.weight',
+                                                'list.single_line_text', 'list.number_integer', 'list.number_decimal', 'list.date_time', 'list.date', 'list.file_reference', 'list.content_reference',  'list.color', 'list.url', 'list.dimension', 'list.volume', 'list.weight',
                                                 'url_handle', 'color', 'boolean', 'money', 'url', 'dimension', 'volume', 'weight'
                                             ]]}
                                         );
@@ -224,6 +224,53 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                                 value: valueValue,
                                             };
                                         });
+                                        if (v.hasOwnProperty('params')) {
+                                            const validatedParams = params.map((v:any, j:number) => {
+                                                const {code, value, type} = v;
+    
+                                                const codes = ['content_id', 'entry_field_key'];
+                                                const [errorsCode, valueCode] = validateString(code,{required: true, choices: [codes]});
+                                                if (errorsCode.length > 0) {
+                                                    errors.push({field: ['entries', 'fields', k, 'params', j, 'code'], message: errorsCode[0]});
+                                                }
+    
+                                                const types = ['text', 'list.text'];
+                                                const [errorsType, valueType] = validateString(type, {required: true, choices: [types]});
+                                                if (errorsType.length > 0) {
+                                                    errors.push({field: ['entries', 'fields', k, 'params', j, 'type'], message: errorsType[0]});
+                                                }
+    
+                                                const [errorsValue, valueValue] = (function() {
+                                                    if (valueCode === 'content_id') {
+                                                        return validateString(value);
+                                                    }
+                                                    if (valueCode === 'entry_field_key') {
+                                                        return validateString(value);
+                                                    }
+    
+                                                    return [[], null];
+                                                }());
+                                                if (errorsValue.length > 0) {
+                                                    if (valueCode === 'choices') {
+                                                        for (let i=0; i < errorsValue.length; i++) {
+                                                            if (!errorsValue[i]) {
+                                                                continue;
+                                                            }
+                                                            errors.push({field: ['entries', 'fields', k, 'params', j, 'value', i], message: errorsValue[i]}); 
+                                                        }
+                                                    } else {
+                                                        errors.push({field: ['entries', 'fields', k, 'params', j, 'value'], message: errorsValue[0]}); 
+                                                    }
+                                                }
+    
+                                                return {
+                                                    type: valueType,
+                                                    code: valueCode,
+                                                    value: valueValue,
+                                                };
+                                            });
+                                            output = {...output, params: validatedParams};
+                                        }
 
                                         const [errorsSystem, valueSystem] = validateBoolean(system);
                                         if (errorsSystem.length > 0) {
@@ -549,6 +596,11 @@ export default async function UpdateContent(contentInput: TContentInput): Promis
                                 key: field.key,
                                 description: field.description,
                                 validations: field.validations.map(v => ({
+                                    type: v.type,
+                                    code: v.code,
+                                    value: v.value
+                                })),
+                                params: field.params.map(v => ({
                                     type: v.type,
                                     code: v.code,
                                     value: v.value

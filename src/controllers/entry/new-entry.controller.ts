@@ -414,6 +414,42 @@ export default async function CreateEntry(entryInput: TEntryInput): Promise<{ent
                                         entry['doc'][schemaData.key] = valueValue;
                                     }
                                 }
+                                if (schemaData.type === 'content_reference') {
+                                    const [errorsValue, valueValue] = validateString(valueData, options);
+
+                                    if (errorsValue.length > 0) {
+                                        errors.push({field: ['doc', schemaData.key], message: errorsValue[0]}); 
+                                    }
+
+                                    if (valueValue !== null && valueValue !== undefined) {
+                                        entry['doc'][schemaData.key] = valueValue;
+                                    }
+                                }
+                                if (schemaData.type === 'list.content_reference') {
+                                    const {required, ...restOptions} = options;
+
+                                    const [errorsValue, valueValue] = validateArray(valueData ?? [], {
+                                        required,
+                                        value: ['string', restOptions]
+                                    });
+        
+                                    if (errorsValue.length > 0) {
+                                        if (valueValue.length) {
+                                            for (let i=0; i < errorsValue.length; i++) {
+                                                if (!errorsValue[i]) {
+                                                    continue;
+                                                }
+                                                errors.push({field: ['doc', schemaData.key, i], message: errorsValue[i]}); 
+                                            }
+                                        } else {
+                                            errors.push({field: ['doc', schemaData.key], message: errorsValue[0]});
+                                        }
+                                    }
+
+                                    if (valueValue !== null && valueValue !== undefined) {
+                                        entry['doc'][schemaData.key] = valueValue;
+                                    }
+                                }
                             }
                         }
                     }

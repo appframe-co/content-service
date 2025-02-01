@@ -16,7 +16,7 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
         const defaultLimit = 10;
 
         let filter: any = {createdBy: userId, projectId, contentId};
-        let {sinceId, limit=defaultLimit, page=1, ids, sectionId, ...doc} = parameters;
+        let {sinceId, limit=defaultLimit, page=1, ids, sectionId, searchFieldKey, searchFieldValue, ...doc} = parameters;
 
         if (limit > 250) {
             limit = defaultLimit;
@@ -34,6 +34,11 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
             filter = {...filter, ...doc};
         }
 
+        if (searchFieldKey && searchFieldValue) {
+            const regex = new RegExp("(?<=[-\\s,.:;\"']|^)" + searchFieldValue, 'i');
+            filter = {...filter, [`doc.${searchFieldKey}`]: regex};
+        }
+
         const skip = (page - 1) * limit;
 
         const entries: TEntryModel[] = await Entry.find(filter).skip(skip).limit(limit);
@@ -48,7 +53,7 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
         }
 
         // COMPARE entries by content
-        const fields: TFieldOutput[] = content.entries.fields.map(f => ({key: f.key, name: f.name, type: f.type}))
+        const fields: TFieldOutput[] = content.entries.fields.map(f => ({key: f.key, name: f.name, type: f.type, params: f.params}));
         const result = entries.map(entry => {
             const doc = fields.reduce((acc: TDoc, field: TFieldOutput) => {
                 acc[field.key] = entry.doc.hasOwnProperty(field.key) ? entry.doc[field.key] : null
@@ -72,7 +77,6 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
         let fileIds: string[] = [];
         const types = ['file_reference', 'list.file_reference'];
         const keyListFile = content.entries.fields.filter(b => types.includes(b.type)).map(b => b.key);
-
         for (const r of result) {
             for (const key of keyListFile) {
                 if (!r.doc[key]) {
@@ -98,6 +102,39 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
         });
         const {files}: {files: TFile[]} = await resFetchFiles.json();
 
+        let entryIds: string[] = [];
+        const keyListContentRef = content.entries.fields
+            .filter(b => ['content_reference', 'list.content_reference'].includes(b.type))
+            .map(b => b.key);
+        for (const r of result) {
+            for (const key of keyListContentRef) {
+                if (!r.doc[key]) {
+                    continue;
+                }
+
+                if (Array.isArray(r.doc[key])) {
+                    entryIds = [...entryIds, ...r.doc[key]];
+                } else {
+                    entryIds = [...entryIds, r.doc[key]];
+                }
+            }
+        }
+        const refEntries: TEntryModel[]|null = await Entry.find({createdBy: userId, projectId, _id: {$in: entryIds}});
+        if (!refEntries) {
+            throw new Error('invalid ref entries');
+        }
+        const outputEntries: TEntry[] = refEntries.map(entry => ({
+            id: entry.id,
+            projectId: entry.projectId,
+            contentId: entry.contentId,
+            createdAt: entry.createdAt,
+            updatedAt: entry.updatedAt,
+            createdBy: entry.createdBy,
+            updatedBy: entry.updatedBy,
+            doc: entry.doc,
+            sectionIds: entry.sectionIds
+        }))
+
         for (const r of result) {
             for (const key of keyListFile) {
                 if (!r.doc[key]) {
@@ -110,6 +147,17 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
                     r.doc[key] = files.find(file => r.doc[key].includes(file.id));
                 }
                 
+            }
+            for (const key of keyListContentRef) {
+                if (!r.doc[key]) {
+                    continue;
+                }
+
+                if (Array.isArray(r.doc[key])) {
+                    r.doc[key] = outputEntries.filter(entry => r.doc[key].includes(entry.id));
+                } else {
+                    r.doc[key] = outputEntries.find(entry => r.doc[key].includes(entry.id));
+                }
             }
         }
 
