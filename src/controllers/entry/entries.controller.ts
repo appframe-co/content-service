@@ -46,20 +46,47 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
             throw new Error('invalid entries');
         }
 
-        // GET content
         const content: TContentModel|null = await Content.findOne({_id: contentId, userId, projectId});
         if (!content) {
             throw new Error('invalid content');
         }
 
-        // COMPARE entries by content
-        const fields: TFieldOutput[] = content.entries.fields.map(f => ({key: f.key, name: f.name, type: f.type, params: f.params}));
-        const result = entries.map(entry => {
-            const doc = fields.reduce((acc: TDoc, field: TFieldOutput) => {
-                acc[field.key] = entry.doc.hasOwnProperty(field.key) ? entry.doc[field.key] : null
+        const entryIndexes: string[] = [];
+        let fileIds: string[] = [];
+        let entryIds: string[] = [];
+
+        const fileTypes = ['file_reference', 'list.file_reference'];
+        const contentRefTypes = ['content_reference', 'list.content_reference'];
+
+        const result = entries.map((entry, i) => {
+            const doc = content.entries.fields.reduce((acc: TDoc, field: TFieldOutput) => {
+                if (!entry.doc.hasOwnProperty(field.key)) {
+                    return acc;
+                }
+
+                acc[field.key] = entry.doc[field.key];
+
+                entryIndexes.push(i + ',' + field.key + ',' + field.type);
+
+                if (fileTypes.includes(field.type)) {
+                    if (Array.isArray(acc[field.key])) {
+                        fileIds = [...fileIds, ...acc[field.key]];
+                    } else {
+                        fileIds = [...fileIds, acc[field.key]];
+                    }
+                }
+                if (contentRefTypes.includes(field.type)) {
+                    if (Array.isArray(acc[field.key])) {
+                        entryIds = [...entryIds, ...acc[field.key]];
+                    } else {
+                        entryIds = [...entryIds, acc[field.key]];
+                    }
+                }
 
                 return acc;
             }, {});
+
+            
 
             return {
                 id: entry.id,
@@ -74,92 +101,66 @@ export default async function Entries(entryInput: TEntryInput, parameters: TPara
             };
         });
 
-        let fileIds: string[] = [];
-        const types = ['file_reference', 'list.file_reference'];
-        const keyListFile = content.entries.fields.filter(b => types.includes(b.type)).map(b => b.key);
-        for (const r of result) {
-            for (const key of keyListFile) {
-                if (!r.doc[key]) {
-                    continue;
-                }
-
-                if (Array.isArray(r.doc[key])) {
-                    fileIds = [...fileIds, ...r.doc[key]];
-                } else {
-                    fileIds = [...fileIds, r.doc[key]];
-                }
+        const files = await (async function() {
+            fileIds = fileIds.filter(e => e);
+            if (!fileIds.length) {
+               return [];
             }
-        }
 
-        // MERGE files with entry
-        const resFetchFiles = await fetch(
-            `${process.env.URL_FILE_SERVICE}/api/get_files_by_ids?projectId=${projectId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({fileIds})
+            const resFetchFiles = await fetch(
+                `${process.env.URL_FILE_SERVICE}/api/get_files_by_ids?projectId=${projectId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({fileIds})
+            });
+            const {files}: {files: TFile[]} = await resFetchFiles.json();
+            
+            return files;
+        }());
+
+        const outputEntries = await (async function() {
+            entryIds = entryIds.filter(e => e);
+            if (!entryIds.length) {
+               return [];
+            }
+
+            const refEntries: TEntryModel[]|null = await Entry.find({createdBy: userId, projectId, _id: {$in: entryIds}});
+            if (!refEntries) {
+                throw new Error('invalid ref entries');
+            }
+            const outputEntries: TEntry[] = refEntries.map(entry => ({
+                id: entry.id,
+                projectId: entry.projectId,
+                contentId: entry.contentId,
+                createdAt: entry.createdAt,
+                updatedAt: entry.updatedAt,
+                createdBy: entry.createdBy,
+                updatedBy: entry.updatedBy,
+                doc: entry.doc,
+                sectionIds: entry.sectionIds
+            }));
+            
+            return outputEntries;
+        }());
+
+        entryIndexes.forEach(i => {
+            const [entryIndx, fieldKey, fieldType] = i.split(',');
+
+            if (fileTypes.includes(fieldType)) {
+                result[+entryIndx].doc[fieldKey] = Array.isArray(result[+entryIndx].doc[fieldKey]) ? 
+                files.filter(file => result[+entryIndx].doc[fieldKey].includes(file.id)) : 
+                files.find(file => result[+entryIndx].doc[fieldKey].includes(file.id));
+            }
+            if (contentRefTypes.includes(fieldType)) {
+                result[+entryIndx].doc[fieldKey] = Array.isArray(result[+entryIndx].doc[fieldKey]) ? 
+                    outputEntries.filter(entry => result[+entryIndx].doc[fieldKey].includes(entry.id)) : 
+                    outputEntries.find(entry => result[+entryIndx].doc[fieldKey].includes(entry.id));
+            }
         });
-        const {files}: {files: TFile[]} = await resFetchFiles.json();
 
-        let entryIds: string[] = [];
-        const keyListContentRef = content.entries.fields
-            .filter(b => ['content_reference', 'list.content_reference'].includes(b.type))
-            .map(b => b.key);
-        for (const r of result) {
-            for (const key of keyListContentRef) {
-                if (!r.doc[key]) {
-                    continue;
-                }
-
-                if (Array.isArray(r.doc[key])) {
-                    entryIds = [...entryIds, ...r.doc[key]];
-                } else {
-                    entryIds = [...entryIds, r.doc[key]];
-                }
-            }
-        }
-        const refEntries: TEntryModel[]|null = await Entry.find({createdBy: userId, projectId, _id: {$in: entryIds}});
-        if (!refEntries) {
-            throw new Error('invalid ref entries');
-        }
-        const outputEntries: TEntry[] = refEntries.map(entry => ({
-            id: entry.id,
-            projectId: entry.projectId,
-            contentId: entry.contentId,
-            createdAt: entry.createdAt,
-            updatedAt: entry.updatedAt,
-            createdBy: entry.createdBy,
-            updatedBy: entry.updatedBy,
-            doc: entry.doc,
-            sectionIds: entry.sectionIds
-        }))
-
-        for (const r of result) {
-            for (const key of keyListFile) {
-                if (!r.doc[key]) {
-                    continue;
-                }
-
-                if (Array.isArray(r.doc[key])) {
-                    r.doc[key] = files.filter(file => r.doc[key].includes(file.id));
-                } else {
-                    r.doc[key] = files.find(file => r.doc[key].includes(file.id));
-                }
-                
-            }
-            for (const key of keyListContentRef) {
-                if (!r.doc[key]) {
-                    continue;
-                }
-
-                if (Array.isArray(r.doc[key])) {
-                    r.doc[key] = outputEntries.filter(entry => r.doc[key].includes(entry.id));
-                } else {
-                    r.doc[key] = outputEntries.find(entry => r.doc[key].includes(entry.id));
-                }
-            }
-        }
+        const fields: TFieldOutput[] = content.entries.fields.map(f => ({key: f.key, name: f.name, type: f.type, params: f.params}));
 
         return {entries: result, fields};
     } catch (error) {

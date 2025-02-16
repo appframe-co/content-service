@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express'
 import TranslationsController from '@/controllers/translation/translations.controller'
+import TranslationsIdsController from '@/controllers/translation/translations-ids.controller'
 import NewTranslationController from '@/controllers/translation/new-translation.controller'
 import EditTranslationController from '@/controllers/translation/edit-translation.controller'
 import { TParameters, TTranslationInput } from '@/types/types'
@@ -40,6 +41,43 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             subject
         }, 
         parameters);
+
+        res.json(data);
+    } catch (e) {
+        let message = String(e);
+
+        if (e instanceof Error) {
+            message = e.message; 
+        }
+
+        res.json({error: 'server_error', description: message});
+    }
+});
+
+router.post('/ids', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { userId, projectId, contentId, subjectId, lang, limit=10, page=1, key, subject } = req.query as TQueryGet;
+
+        const {entryIds, fileIds}: {entryIds: string[], fileIds: string[]} = req.body;
+
+        const parameters: TParameters = {};
+        if (limit) {
+            parameters.limit = +limit;
+        }
+        if (page) {
+            parameters.page = +page;
+        }
+
+        const data = await TranslationsIdsController({
+            userId,
+            projectId,
+            contentId,
+            subjectId,
+            lang,
+            key,
+            subject
+        }, 
+        parameters, {entryIds, fileIds});
 
         res.json(data);
     } catch (e) {

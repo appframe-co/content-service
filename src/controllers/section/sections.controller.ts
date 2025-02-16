@@ -58,18 +58,17 @@ export default async function Sections(sectionInput: TSectionInput, parameters: 
 
         const skip = (page - 1) * limit;
 
-        // GET content
         const content: TContentModel|null = await Content.findOne({_id: contentId, userId, projectId});
         if (!content) {
             throw new Error('invalid content');
         }
 
-        // COMPARE sections by content
         const fields: TFieldOutput[] = content.sections.fields.map(f => ({key: f.key, name: f.name, type: f.type}))
         const keys = fields.reduce((acc:string[], f:TFieldOutput) => {
             acc.push(f.key);
             return acc;
         }, []);
+
         const parent: TSection|null = await (async function() {
             try {
                 const section: TSectionModel|null = await Section.findOne({createdBy: userId, projectId, contentId, _id: parentId});
@@ -152,7 +151,6 @@ async function getSections(filter:TFilter, keys:string[], fields: TField[], proj
             }
         }
 
-        // MERGE files with section
         const resFetchFiles = await fetch(
             `${process.env.URL_FILE_SERVICE}/api/get_files_by_ids?projectId=${projectId}`, {
             method: 'POST',

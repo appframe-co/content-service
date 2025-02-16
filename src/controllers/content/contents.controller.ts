@@ -1,6 +1,8 @@
 import Content from '@/models/content.model';
 import Entry from '@/models/entry.model'
 import {TErrorResponse, TContent, TSort, TParameters, TContentModel} from '@/types/types';
+import mongoose from 'mongoose';
+const ObjectId = mongoose.Types.ObjectId;
 
 type TContentsInput = {
     userId: string;
@@ -40,9 +42,24 @@ export default async function Contents(contentInput: TContentsInput, parameters:
             throw new Error('invalid content');
         }
 
+        const entriesCountContents: {count:number, _id: string}[] = await Entry.aggregate([
+            { 
+                $match: {userId: new ObjectId(userId), projectId: new ObjectId(projectId)} 
+            },
+            { 
+                $group: { _id: "$contentId", count: { $sum: 1 } } 
+            },
+            {
+                $project: {
+                    _id: { $toString: "$_id" },
+                    count: 1
+                }
+            }
+        ]);
+
         const output = [];
         for (const content of contents) {
-            const entriesCount: number = await Entry.countDocuments({userId, projectId, contentId: content.id});
+            const entriesCount = entriesCountContents.find(e => e._id === content.id)?.count;
 
             output.push({
                 id: content.id,
@@ -88,7 +105,7 @@ export default async function Contents(contentInput: TContentsInput, parameters:
                         system: field.system
                     })),
                 },
-                entriesCount
+                entriesCount: entriesCount ?? 0
             });
         }
 
